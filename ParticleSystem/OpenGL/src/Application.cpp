@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 
+
 GLFWwindow* window;
 
 enum ShaderType
