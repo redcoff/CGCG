@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <gtc/type_ptr.hpp>
 
 #include <cstdlib>
 #include <iostream>
@@ -7,8 +8,12 @@
 #include <string>
 #include <sstream>
 
+#include "Camera.h"
+#
 
 GLFWwindow* window;
+static Camera camera;
+int mViewProjUniform;
 
 enum ShaderType
 {
@@ -94,6 +99,7 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
 }
 
 bool createWindow()
+
 {
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
 
@@ -130,23 +136,54 @@ bool initializeOpenGL()
     return true;
 }
 
+void draw()
+{
+    /* Render here */
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    std::cout << camera._direction.x << ", " << camera._direction.y << ", " << camera._direction.z << '\n';
+
+    glUniformMatrix4fv(mViewProjUniform, 1, GL_FALSE, glm::value_ptr(camera.GetViewProjection()));
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+
+    /* Swap front and back buffers */
+    glfwSwapBuffers(window);
+
+    /* Poll for and process events */
+    glfwPollEvents();
+}
+
+void update()
+{
+    if (glfwGetKey(window, GLFW_KEY_W))
+    {
+        camera.Rotate(0.f, .1f);
+    }
+	if (glfwGetKey(window, GLFW_KEY_S))
+    {
+        camera.Rotate(0.f, -.1f);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A))
+    {
+        camera.Rotate(-.1f, 0.f);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D))
+    {
+        camera.Rotate(.1f, 0.f);
+    }
+}
+
 void loop()
 {
     while (!glfwWindowShouldClose(window))
     {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
+        update();
+        draw();
     }
 }
+
 
 int main(void)
 {
@@ -157,7 +194,7 @@ int main(void)
         0.0f, 0.5f,
         0.5f, -0.5f
     };
-
+ 
     GLuint buffer = 0;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -169,6 +206,8 @@ int main(void)
     ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 	unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
     glUseProgram(shader);
+
+    mViewProjUniform = glGetUniformLocation(shader, "mViewProj");
 
     loop();
 
