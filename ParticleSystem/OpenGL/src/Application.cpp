@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "Camera.h"
+#include "ParticleSystem.h"
 #
 
 GLFWwindow* window;
@@ -141,8 +142,6 @@ void draw()
     /* Render here */
     glClear(GL_COLOR_BUFFER_BIT);
 
-    std::cout << camera._direction.x << ", " << camera._direction.y << ", " << camera._direction.z << '\n';
-
     glUniformMatrix4fv(mViewProjUniform, 1, GL_FALSE, glm::value_ptr(camera.GetViewProjection()));
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -155,31 +154,39 @@ void draw()
     glfwPollEvents();
 }
 
-void update()
+void update(double deltaTime)
 {
     if (glfwGetKey(window, GLFW_KEY_W))
     {
-        camera.Rotate(0.f, .1f);
+        camera.Rotate(0.f, .005f);
     }
 	if (glfwGetKey(window, GLFW_KEY_S))
     {
-        camera.Rotate(0.f, -.1f);
+        camera.Rotate(0.f, -.005f);
     }
     if (glfwGetKey(window, GLFW_KEY_A))
     {
-        camera.Rotate(-.1f, 0.f);
+        camera.Rotate(.005f, 0.f);
     }
     if (glfwGetKey(window, GLFW_KEY_D))
     {
-        camera.Rotate(.1f, 0.f);
+        camera.Rotate(-.005f, 0.f);
     }
+
+    ParticleSystem::Emit();
+    ParticleSystem::Update(deltaTime);
 }
 
 void loop()
 {
+    static double prevTime = 0.0;
     while (!glfwWindowShouldClose(window))
     {
-        update();
+        double time = glfwGetTime();
+        double dt = time - prevTime;
+        prevTime = time;
+
+        update(dt);
         draw();
     }
 }
@@ -189,19 +196,21 @@ int main(void)
 {
     initializeOpenGL();
 
-    float positions[6] = {
-        -0.5f, -0.5,
-        0.0f, 0.5f,
-        0.5f, -0.5f
+    float positions[] = {
+        -0.5f, -0.5, 1.f, 0.f, 0.f,
+        0.0f, 0.5f, 0.f, 1.f, 0.f,
+        0.5f, -0.5f, 0.f, 0.f, 1.f
     };
  
     GLuint buffer = 0;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
-
+    glBufferData(GL_ARRAY_BUFFER, 15 * sizeof(float), positions, GL_STATIC_DRAW);
+     
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*) (sizeof(float) * 2));
 
     ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 	unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);

@@ -6,16 +6,22 @@ struct Particle
 {
 	glm::vec3 position;
 	glm::vec3 velocity;
-	float life;
+	double lifetime;
 
-	Particle() : position(0.f), velocity(0.f), life(0.f) { }
+	Particle() : position(0.f), velocity(0.f), lifetime(0.f) { }
+	Particle(glm::vec3 position, glm::vec3 velocity, float lifetime):
+		position(position), velocity(velocity), lifetime(lifetime) {}
 };
 
-namespace ParticleSystem
+class ParticleSystem
 {
-	std::vector<Particle> particles;
-	void Emit();
-	void Update();
-	void Draw();
+private:
+	static std::vector<Particle> particles;
+	static size_t pidx;
+
+public:
+	static void Emit();
+	static void Update(double);
+	static void Draw();
 };
 
